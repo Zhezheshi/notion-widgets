@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notion Flip Clock</title>
+    <style>
+        /* 1. 全局重置，保证没有多余边距 */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: transparent; /* 透明背景，融入Notion */
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+        }
+
+        /* 2. 时钟容器 */
+        .clock-container {
+            display: flex;
+            gap: 10px; /* 卡片之间的间距 */
+        }
+
+        /* 3. 单个卡片样式 (翻页钟风格) */
+        .card {
+            background-color: #2f3437; /* Notion深色模式常用黑 */
+            color: #e0e0e0;
+            width: 60px;
+            height: 80px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            font-weight: bold;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* 模拟翻页钟中间的那条横线 */
+        .card::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background-color: rgba(0,0,0,0.2);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* 冒号样式 */
+        .colon {
+            font-size: 30px;
+            color: #2f3437;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+        }
+        
+        /* 适配浅色/深色模式的逻辑可以更复杂，这里为了极简，默认深色卡片 */
+    </style>
+</head>
+<body>
+
+    <div class="clock-container">
+        <div class="card" id="hour">00</div>
+        <div class="colon">:</div>
+        <div class="card" id="minute">00</div>
+        <div class="colon">:</div>
+        <div class="card" id="second">00</div>
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+
+            document.getElementById('hour').innerText = h;
+            document.getElementById('minute').innerText = m;
+            document.getElementById('second').innerText = s;
+        }
+
+        // 立即执行一次，避免打开时有1秒延迟
+        updateClock();
+        // 每秒刷新
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
