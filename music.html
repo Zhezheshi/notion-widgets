@@ -3,42 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Vinyl Player</title>
+    <title>Micro Vinyl Player</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aplayer/1.10.1/APlayer.min.css">
     <style>
         /* ================= 1. 全局设置 ================= */
-        body {
+        html, body {
             margin: 0;
             padding: 0;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* 禁止滚动条 */
+            background-color: #ffffff; 
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #ffffff;
-            font-family: -apple-system, sans-serif;
-            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        /* 迷你播放器容器 */
+        /* 播放器容器 */
         .player-container {
             position: relative;
-            /* 【缩小】尺寸改为 260x110 */
             width: 260px; 
             height: 110px;
             background: #fff;
-            border-radius: 12px; /* 圆角变小 */
+            border-radius: 12px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.08);
             display: flex;
             align-items: center;
-            padding: 12px 15px; /* 内边距缩小 */
+            padding: 12px 15px;
             box-sizing: border-box;
             overflow: visible; 
+            
+            /* 🔥🔥🔥 核心修改：整体缩放 0.75 倍 🔥🔥🔥 */
+            /* 这会让它看起来比原来更小、更精致 */
+            transform: scale(0.8); 
+            transform-origin: center center;
         }
 
-        /* ================= 2. 迷你黑胶 ================= */
+        /* ================= 2. 迷你黑胶 (保持比例) ================= */
         .vinyl-group {
             position: relative;
-            /* 【缩小】唱片直径改为 84px */
             width: 84px;
             height: 84px;
             flex-shrink: 0;
@@ -76,7 +80,6 @@
         .arm {
             position: absolute;
             top: -5px;
-            /* 【调整】唱臂位置 */
             left: 75px; 
             width: 60px;
             height: 80px;
@@ -113,7 +116,7 @@
 
         /* ================= 4. 信息与控制 ================= */
         .info-area {
-            margin-left: 18px; /* 间距缩小 */
+            margin-left: 18px;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
@@ -123,7 +126,6 @@
         }
 
         .song-title {
-            /* 【缩小】字号 */
             font-size: 14px;
             font-weight: 700;
             color: #333;
@@ -140,18 +142,16 @@
         .controls {
             display: flex;
             align-items: center;
-            justify-content: space-between; /* 两端对齐 */
+            justify-content: space-between;
         }
 
         .btn { cursor: pointer; transition: transform 0.1s; }
         .btn:active { transform: scale(0.9); }
         
-        /* 【缩小】图标 */
         .icon-play, .icon-pause { width: 24px; height: 24px; fill: #333; }
         .icon-pause { display: none; }
 
         .progress-bar {
-            /* 迷你版把进度条放在右侧或者缩小 */
             flex-grow: 1;
             height: 3px;
             background: #eee;
@@ -201,14 +201,14 @@
     <script src="https://cdn.jsdelivr.net/npm/meting@2.0.1/dist/Meting.min.js"></script>
 
     <script>
-        // 初始化 (逻辑保持不变)
+        // 1. 可以在这里换歌 (Netease ID)
+        const NETEASE_ID = '1948805113'; 
+
+        // 2. 初始化逻辑
         const ap = new APlayer({
             container: document.getElementById('aplayer'),
-            audio: [{ name: 'Loading...', artist: 'Loading...', url: '', cover: '', theme: '#ebd0c2' }]
+            audio: [{ name: 'Loading...', artist: '...', url: '', cover: '', theme: '#ebd0c2' }]
         });
-
-        // 依然使用 Interstellar (Hans Zimmer)，你也可以换 ID
-        const NETEASE_ID = '1948805113'; 
 
         fetch(`https://api.i-meto.com/meting/api?server=netease&type=song&id=${NETEASE_ID}&r=${Math.random()}`)
             .then(r => r.json())
