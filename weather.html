@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Blue Weather Widget</title>
+    <style>
+        /* ================= 1. 基础样式与蓝色背景 ================= */
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            /* 蓝色天空渐变背景 */
+            background: linear-gradient(to bottom, #4FACFE, #00f2fe);
+            color: #ffffff; /* 文字全部改白色以适应蓝底 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh; /* 确保背景填满 */
+            box-sizing: border-box;
+        }
+
+        /* ================= 2. CSS 动画定义 ================= */
+        /* 太阳旋转 */
+        @keyframes spin { 
+            from { transform: rotate(0deg); } to { transform: rotate(360deg); } 
+        }
+        /* 云朵漂浮 */
+        @keyframes float { 
+            0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } 
+        }
+        /* 雨滴/雪花下落 */
+        @keyframes fall {
+            0% { transform: translateY(-5px); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(10px); opacity: 0; }
+        }
+        /* 雷电闪烁 */
+        @keyframes flash {
+            0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+        }
+
+        /* 动画类应用 */
+        .anim-spin { animation: spin 12s linear infinite; transform-origin: center; }
+        .anim-float { animation: float 3s ease-in-out infinite; }
+        .anim-rain-1 { animation: fall 0.8s linear infinite; animation-delay: 0s; }
+        .anim-rain-2 { animation: fall 0.8s linear infinite; animation-delay: 0.3s; }
+        .anim-rain-3 { animation: fall 0.8s linear infinite; animation-delay: 0.5s; }
+        .anim-flash { animation: flash 1s steps(2, start) infinite; }
+
+
+        /* ================= 3. 布局样式 ================= */
+        .current-weather {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .city-name {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .current-temp-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        /* 控制主图标大小 */
+        .current-icon svg { width: 65px; height: 65px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2)); }
+        
+        .current-temp-wrap { text-align: left; }
+        .current-temp { font-size: 38px; font-weight: 600; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .current-desc { font-size: 14px; opacity: 0.9; margin-top: 5px; }
+
+        /* 底部未来预报 */
+        .forecast-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 550px;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 10px; /* 给滚动条留点位置 */
+            /* 隐藏滚动条但保留功能 */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE 10+ */
+        }
+        .forecast-container::-webkit-scrollbar { display: none; /* Chrome Safari */ }
+
+        .forecast-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            min-width: 55px;
+            background-color: rgba(255,255,255,0.15); /* 半透明白色背景卡片 */
+            padding: 10px 5px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px); /* 毛玻璃效果 */
+        }
+
+        .day-name { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #fff; }
+        /* 控制小图标大小 */
+        .forecast-icon svg { width: 32px; height: 32px; margin-bottom: 8px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
+        .temps { font-size: 13px; display: flex; flex-direction: column; align-items: center; }
+        .max-temp { font-weight: 600; }
+        .min-temp { opacity: 0.8; }
+
+    </style>
+</head>
+<body>
+
+    <div class="current-weather">
+        <div class="city-name">HANGZHOU</div> 
+        <div class="current-temp-container">
+            <div class="current-icon" id="current-icon"></div>
+            <div class="current-temp-wrap">
+                <div class="current-temp"><span id="current-temp">--</span>°C</div>
+                <div class="current-desc" id="current-desc">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="forecast-container" id="forecast-container">
+        </div>
+
+    <script>
+        // ================= 配置区域 (杭州) =================
+        const LAT = 30.2458; 
+        const LON = 120.2100;
+        const CITY_DISPLAY_NAME = "HANGZHOU"; 
+        // ==================================================
+
+        // ================= SVG 图标生成函数 =================
+        // 这些函数返回包含动画类的 SVG 字符串
+        function getSunSVG() {
+            return `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                        <g class="anim-spin" fill="#FFD700">
+                            <circle cx="32" cy="32" r="14"/>
+                            <path d="M32 4V12M32 52V60M4 32H12M52 32H60M12.2 12.2L17.8 17.8M46.2 46.2L51.8 51.8M12.2 51.8L17.8 46.2M46.2 17.8L51.8 12.2" stroke="#FFD700" stroke-width="4" stroke-linecap="round"/>
+                        </g>
+                    </svg>`;
+        }
+
+        function getCloudSVG() {
+            return `<svg class="anim-float" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M46 18C40.5 18 36 22.5 36 28C36 28.8 36.1 29.6 36.3 30.4C34.7 29.5 32.9 29 31 29C26 29 22 33 22 38C22 38.8 22.1 39.6 22.3 40.4C20.7 39.5 18.9 39 17 39C12 39 8 43 8 48C8 53 12 57 17 57H46C53.7 57 60 50.7 60 43C60 35.3 53.7 29 46 29C46 22.9 41.5 18 36 18Z" fill="#FFFFFF"/>
+                    </svg>`;
+        }
+
+        function getPartlyCloudySVG() {
+             return `<svg class="anim-float" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                        <g class="anim-spin" fill="#FFD700" transform="translate(-8, -8) scale(0.8)">
+                            <circle cx="32" cy="32" r="14"/>
+                            <path d="M32 4V12M32 52V60M4 32H12M52 32H60M12.2 12.2L17.8 17.8M46.2 46.2L51.8 51.8M12.2 51.8L17.8 46.2M46.2 17.8L51.8 12.2" stroke="#FFD700" stroke-width="4" stroke-linecap="round"/>
+                        </g>
+                        <path d="M46 26C40.5 26 36 30.5 36 36C36 36.8 36.1 37.6 36.3 38.4C34.7 37.5 32.9 37 31 37C26 37 22 41 22 46C22 46.8 22.1 47.6 22.3 48.4C20.7 47.5 18.9 47 17 47C12 47 8 51 8 56C8 61 12 65 17 65H46C53.7 65 60 58.7 60 51C60 43.3 53.7 37 46 37C46 30.9 41.5 26 36 26Z" fill="#FFFFFF"/>
+                    </svg>`;
+        }
+
+        function getRainSVG() {
+            return `<svg class="anim-float" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M46 18C40.5 18 36 22.5 36 28C36 28.8 36.1 29.6 36.3 30.4C34.7 29.5 32.9 29 31 29C26 29 22 33 22 38C22 38.8 22.1 39.6 22.3 40.4C20.7 39.5 18.9 39 17 39C12 39 8 43 8 48C8 53 12 57 17 57H46C53.7 57 60 50.7 60 43C60 35.3 53.7 29 46 29C46 22.9 41.5 18 36 18Z" fill="#E0E0E0"/>
+                        <g fill="#64B5F6">
+                            <rect class="anim-rain-1" x="20" y="48" width="3" height="8" rx="1.5"/>
+                            <rect class="anim-rain-2" x="30" y="48" width="3" height="8" rx="1.5"/>
+                            <rect class="anim-rain-3" x="40" y="48" width="3" height="8" rx="1.5"/>
+                        </g>
+                    </svg>`;
+        }
+        
+        function getSnowSVG() {
+            return `<svg class="anim-float" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M46 18C40.5 18 36 22.5 36 28C36 28.8 36.1 29.6 36.3 30.4C34.7 29.5 32.9 29 31 29C26 29 22 33 22 38C22 38.8 22.1 39.6 22.3 40.4C20.7 39.5 18.9 39 17 39C12 39 8 43 8 48C8 53 12 57 17 57H46C53.7 57 60 50.7 60 43C60 35.3 53.7 29 46 29C46 22.9 41.5 18 36 18Z" fill="#E0E0E0"/>
+                        <g fill="#FFFFFF">
+                            <circle class="anim-rain-1" cx="22" cy="52" r="3"/>
+                            <circle class="anim-rain-2" cx="32" cy="52" r="3"/>
+                            <circle class="anim-rain-3" cx="42" cy="52" r="3"/>
+                        </g>
+                    </svg>`;
+        }
+
+        // 核心逻辑：根据天气代码返回对应的 SVG 动画
+        function getWeatherSVG(code) {
+            if (code === 0) return getSunSVG(); // 晴
+            if (code >= 1 && code <= 3) return getPartlyCloudySVG(); // 多云
+            if (code >= 45 && code <= 48) return getCloudSVG(); // 阴/雾
+            if (code >= 51 && code <= 67) return getRainSVG(); // 雨
+            if (code >= 71 && code <= 77) return getSnowSVG(); // 雪
+            if (code >= 80 && code <= 99) return getRainSVG(); // 阵雨/雷雨 (简化用雨)
+            return getCloudSVG();
+        }
+
+        // 天气描述文字
+        function getWeatherDesc(code) {
+             if (code === 0) return 'Clear Sky';
+             if (code >= 1 && code <= 3) return 'Partly Cloudy';
+             if (code >= 51 && code <= 67) return 'Rain';
+             if (code >= 71 && code <= 77) return 'Snow';
+             if (code >= 95) return 'Thunderstorm';
+             return 'Overcast';
+        }
+
+        // 日期处理
+        function getDayName(dateStr) {
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const parts = dateStr.split('-');
+            // 修复Safari等浏览器日期解析问题
+            const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])); 
+            return days[d.getDay()];
+        }
+
+        // 数据获取主函数
+        async function fetchWeather() {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=weathercode,temperature_2m_max,temperature_2m_min&current_weather=true&timezone=auto`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                // 1. 更新当前天气 (插入SVG)
+                document.querySelector('.city-name').innerText = CITY_DISPLAY_NAME;
+                document.getElementById('current-temp').innerText = Math.round(data.current_weather.temperature);
+                document.getElementById('current-icon').innerHTML = getWeatherSVG(data.current_weather.weathercode);
+                document.getElementById('current-desc').innerText = getWeatherDesc(data.current_weather.weathercode);
+
+                // 2. 更新未来预报
+                const daily = data.daily;
+                const container = document.getElementById('forecast-container');
+                container.innerHTML = '';
+
+                for (let i = 0; i < 7; i++) {
+                    const dayName = getDayName(daily.time[i]);
+                    const maxTemp = Math.round(daily.temperature_2m_max[i]);
+                    const minTemp = Math.round(daily.temperature_2m_min[i]);
+                    // 插入SVG
+                    const svgIcon = getWeatherSVG(daily.weathercode[i]);
+
+                    const html = `
+                        <div class="forecast-item">
+                            <div class="day-name">${dayName}</div>
+                            <div class="forecast-icon">${svgIcon}</div>
+                            <div class="temps">
+                                <span class="max-temp">${maxTemp}°</span>
+                                <span class="min-temp">${minTemp}°</span>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += html;
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+                document.querySelector('.city-name').innerText = "Offline";
+            }
+        }
+
+        fetchWeather();
+    </script>
+</body>
+</html>
