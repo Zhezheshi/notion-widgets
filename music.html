@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real Vinyl Player</title>
+    <title>Mini Vinyl Player</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aplayer/1.10.1/APlayer.min.css">
     <style>
-        /* ================= 1. 全局与背景 ================= */
+        /* ================= 1. 全局设置 ================= */
         body {
             margin: 0;
             padding: 0;
@@ -14,199 +14,155 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #ffffff; /* 纯白背景 */
+            background-color: #ffffff;
             font-family: -apple-system, sans-serif;
             overflow: hidden;
         }
 
-        /* 播放器主体容器 */
+        /* 迷你播放器容器 */
         .player-container {
             position: relative;
-            width: 320px;
-            height: 160px; /* 紧凑高度 */
+            /* 【缩小】尺寸改为 260x110 */
+            width: 260px; 
+            height: 110px;
             background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); /* 悬浮阴影 */
+            border-radius: 12px; /* 圆角变小 */
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
             display: flex;
             align-items: center;
-            padding: 20px;
+            padding: 12px 15px; /* 内边距缩小 */
             box-sizing: border-box;
-            overflow: visible; /* 允许唱片超出边界 */
+            overflow: visible; 
         }
 
-        /* ================= 2. 黑胶唱片 (核心视觉) ================= */
+        /* ================= 2. 迷你黑胶 ================= */
         .vinyl-group {
             position: relative;
-            width: 120px;
-            height: 120px;
+            /* 【缩小】唱片直径改为 84px */
+            width: 84px;
+            height: 84px;
             flex-shrink: 0;
             z-index: 2;
         }
 
-        /* 唱片本体 */
         .vinyl-disc {
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: 
-                radial-gradient(#111 0%, #111 15%, transparent 15.5%), /* 中间孔 */
-                radial-gradient(#333 0%, #111 30%, #111 100%); /* 盘面 */
-            /* 黑胶纹理反光 */
-            background-image: repeating-radial-gradient(
-                #111 0, 
-                #111 2px, 
-                #222 3px, 
-                #222 4px
-            );
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            background: radial-gradient(#111 0%, #111 15%, transparent 15.5%), radial-gradient(#333 0%, #111 30%, #111 100%);
+            background-image: repeating-radial-gradient(#111 0, #111 2px, #222 3px, #222 4px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
             display: flex;
             justify-content: center;
             align-items: center;
             transition: transform 0.5s;
         }
 
-        /* 封面图 (贴在唱片中间) */
         .cover-img {
             width: 65%;
             height: 65%;
             border-radius: 50%;
             background-size: cover;
             background-position: center;
-            border: 2px solid #111;
+            border: 1.5px solid #111;
         }
 
-        /* 旋转动画类 */
-        .rotating {
-            animation: spin 8s linear infinite;
-        }
-        
-        /* 暂停时动画暂停，而不是重置 */
-        .paused {
-            animation-play-state: paused;
-        }
+        .rotating { animation: spin 8s linear infinite; }
+        .paused { animation-play-state: paused; }
 
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* ================= 3. 唱臂 (Arm) ================= */
+        /* ================= 3. 迷你唱臂 ================= */
         .arm {
             position: absolute;
-            top: -10px;
-            left: 100px; /* 唱臂轴心位置 */
-            width: 80px;
-            height: 120px;
+            top: -5px;
+            /* 【调整】唱臂位置 */
+            left: 75px; 
+            width: 60px;
+            height: 80px;
             z-index: 5;
-            transform-origin: 15px 15px; /* 旋转轴心 */
-            transform: rotate(-30deg); /* 默认移开状态 */
+            transform-origin: 12px 12px;
+            transform: rotate(-30deg);
             transition: transform 0.5s ease-in-out;
-            pointer-events: none; /* 不阻挡点击 */
+            pointer-events: none;
         }
 
-        /* 唱臂结构画图 (CSS画图) */
+        .arm-pivot {
+            width: 24px; height: 24px;
+            background: #ddd; border-radius: 50%;
+            position: absolute; top: 0; left: 0;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #bbb;
+        }
         .arm-body {
-            width: 6px;
-            height: 80px;
+            width: 4px; height: 55px;
             background: #ccc;
-            position: absolute;
-            top: 15px;
-            left: 12px;
-            border-radius: 3px;
+            position: absolute; top: 12px; left: 10px;
+            border-radius: 2px;
             transform: rotate(-10deg);
         }
         .arm-head {
-            width: 12px;
-            height: 20px;
+            width: 8px; height: 16px;
             background: #333;
-            position: absolute;
-            bottom: 15px;
-            left: 20px;
+            position: absolute; bottom: 12px; left: 16px;
             transform: rotate(20deg);
             border-radius: 2px;
         }
-        .arm-pivot {
-            width: 30px;
-            height: 30px;
-            background: #ddd;
-            border-radius: 50%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
-            border: 1px solid #bbb;
-        }
 
-        /* 播放状态：唱臂移上去 */
-        .arm.playing {
-            transform: rotate(0deg);
-        }
+        .arm.playing { transform: rotate(0deg); }
 
-        /* ================= 4. 信息与控制器 (右侧) ================= */
+        /* ================= 4. 信息与控制 ================= */
         .info-area {
-            margin-left: 25px;
+            margin-left: 18px; /* 间距缩小 */
             flex-grow: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
             overflow: hidden;
+            height: 100%;
         }
 
         .song-title {
-            font-size: 18px;
+            /* 【缩小】字号 */
+            font-size: 14px;
             font-weight: 700;
             color: #333;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-bottom: 5px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            margin-bottom: 2px;
         }
 
         .artist {
-            font-size: 13px;
-            color: #888;
-            margin-bottom: 15px;
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 8px;
         }
 
-        /* 自定义简单的控制按钮 */
         .controls {
             display: flex;
             align-items: center;
-            gap: 15px;
+            justify-content: space-between; /* 两端对齐 */
         }
 
-        .btn {
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
+        .btn { cursor: pointer; transition: transform 0.1s; }
         .btn:active { transform: scale(0.9); }
         
-        /* 播放/暂停图标 SVG */
-        .icon-play, .icon-pause { width: 32px; height: 32px; fill: #333; }
-        .icon-pause { display: none; } /* 默认隐藏暂停键 */
+        /* 【缩小】图标 */
+        .icon-play, .icon-pause { width: 24px; height: 24px; fill: #333; }
+        .icon-pause { display: none; }
 
-        /* 进度条背景 */
         .progress-bar {
-            width: 100%;
-            height: 4px;
+            /* 迷你版把进度条放在右侧或者缩小 */
+            flex-grow: 1;
+            height: 3px;
             background: #eee;
             border-radius: 2px;
-            margin-top: 15px;
+            margin-left: 10px;
             position: relative;
             cursor: pointer;
         }
-        /* 进度条前景 */
-        .progress-current {
-            width: 0%;
-            height: 100%;
-            background: #333;
-            border-radius: 2px;
-            transition: width 0.1s linear;
-        }
+        .progress-current { width: 0%; height: 100%; background: #333; border-radius: 2px; transition: width 0.1s linear; }
 
-        /* 隐藏原本的 APlayer，我们用它的内核，不用它的皮 */
         #aplayer { display: none; }
-
     </style>
 </head>
 <body>
@@ -233,69 +189,41 @@
                     <svg class="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                 </div>
-            </div>
-
-            <div class="progress-bar" id="progress-wrap">
-                <div class="progress-current" id="progress"></div>
+                <div class="progress-bar" id="progress-wrap">
+                    <div class="progress-current" id="progress"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="aplayer"></div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aplayer/1.10.1/APlayer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/meting@2.0.1/dist/Meting.min.js"></script>
 
     <script>
-        // 初始化 APlayer
+        // 初始化 (逻辑保持不变)
         const ap = new APlayer({
             container: document.getElementById('aplayer'),
-            audio: [{
-                // 这里的ID就是你提供的网易云ID
-                // 警告：如果网易云有版权限制，这里可能会播放失败。
-                // 如果失败，需要换一首ID试试。
-                name: 'Loading...',
-                artist: 'Loading...',
-                url: '', 
-                cover: '', 
-                theme: '#ebd0c2'
-            }]
+            audio: [{ name: 'Loading...', artist: 'Loading...', url: '', cover: '', theme: '#ebd0c2' }]
         });
 
-        // 使用 Meting API 获取网易云数据
-        // 这里的 ID 就是你那首歌: Interstellar (Hans Zimmer)
+        // 依然使用 Interstellar (Hans Zimmer)，你也可以换 ID
         const NETEASE_ID = '1948805113'; 
 
         fetch(`https://api.i-meto.com/meting/api?server=netease&type=song&id=${NETEASE_ID}&r=${Math.random()}`)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 if(data && data.length > 0) {
                     const song = data[0];
-                    
-                    // 更新 APlayer 播放列表
                     ap.list.clear();
-                    ap.list.add({
-                        name: song.title,
-                        artist: song.author,
-                        url: song.url,
-                        cover: song.pic,
-                        lrc: song.lrc
-                    });
-
-                    // 更新 UI 文字和图片
+                    ap.list.add({ name: song.title, artist: song.author, url: song.url, cover: song.pic, lrc: song.lrc });
                     document.getElementById('title').innerText = song.title;
                     document.getElementById('author').innerText = song.author;
                     document.getElementById('cover-img').style.backgroundImage = `url(${song.pic})`;
                 }
             })
-            .catch(e => {
-                console.error("Song load failed", e);
-                document.getElementById('title').innerText = "Load Failed";
-                document.getElementById('author').innerText = "Check ID / Network";
-            });
+            .catch(e => { document.getElementById('title').innerText = "Error"; });
 
-
-        // ================= 交互逻辑控制 =================
         const vinyl = document.getElementById('vinyl');
         const arm = document.getElementById('arm');
         const playBtn = document.getElementById('play-btn');
@@ -303,46 +231,28 @@
         const iconPause = document.querySelector('.icon-pause');
         const progress = document.getElementById('progress');
 
-        // 切换播放/暂停
-        playBtn.addEventListener('click', () => {
-            ap.toggle();
-        });
+        playBtn.addEventListener('click', () => ap.toggle());
 
-        // 监听播放开始
         ap.on('play', () => {
-            vinyl.classList.add('rotating');
-            vinyl.classList.remove('paused');
-            arm.classList.add('playing');
-            
-            // 切换图标
-            iconPlay.style.display = 'none';
-            iconPause.style.display = 'block';
+            vinyl.classList.add('rotating'); vinyl.classList.remove('paused'); arm.classList.add('playing');
+            iconPlay.style.display = 'none'; iconPause.style.display = 'block';
         });
 
-        // 监听暂停
         ap.on('pause', () => {
-            vinyl.classList.add('paused');
-            arm.classList.remove('playing');
-
-            // 切换图标
-            iconPlay.style.display = 'block';
-            iconPause.style.display = 'none';
+            vinyl.classList.add('paused'); arm.classList.remove('playing');
+            iconPlay.style.display = 'block'; iconPause.style.display = 'none';
         });
 
-        // 监听进度更新
         ap.on('timeupdate', () => {
             const percentage = (ap.audio.currentTime / ap.audio.duration) * 100;
             progress.style.width = percentage + '%';
         });
 
-        // 点击进度条跳转
         document.getElementById('progress-wrap').addEventListener('click', (e) => {
             const width = e.target.clientWidth;
             const clickX = e.offsetX;
-            const duration = ap.audio.duration;
-            ap.seek((clickX / width) * duration);
+            ap.seek((clickX / width) * ap.audio.duration);
         });
-
     </script>
 </body>
 </html>
