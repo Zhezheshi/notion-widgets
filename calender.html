@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Blue Calendar</title>
+    <style>
+        /* ================= 1. 全局设置 ================= */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff; /* 纯白背景 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* 日历容器 */
+        .calendar-wrapper {
+            width: 320px; /* 固定宽度 */
+            padding: 20px;
+            box-sizing: border-box;
+            background: #fff;
+            
+            /* 微微缩小，适配 Notion 的显示比例 */
+            transform: scale(0.95);
+            transform-origin: center center;
+        }
+
+        /* ================= 2. 头部 (Header) ================= */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px; /* 增加间距 */
+            padding: 0 10px;
+        }
+
+        .current-date {
+            font-size: 18px;
+            font-weight: 700; /* 加粗 */
+            color: #2c3e50;   /* 深蓝灰色标题 */
+            margin: 0;
+        }
+
+        .icons span {
+            cursor: pointer;
+            font-size: 20px;
+            color: #546e7a; /* 箭头的颜色 */
+            padding: 0 10px;
+            font-weight: 300;
+            transition: color 0.2s;
+        }
+
+        .icons span:hover {
+            color: #000;
+        }
+
+        /* ================= 3. 星期栏 (M T W...) ================= */
+        .calendar-ul {
+            display: flex;
+            list-style: none;
+            flex-wrap: wrap;
+            padding: 0;
+            margin: 0;
+        }
+
+        .calendar-ul li {
+            width: calc(100% / 7); /* 7等分 */
+            text-align: center;
+            margin-bottom: 18px; /* 行间距 */
+        }
+
+        .weeks li {
+            font-weight: 700; /* 星期头加粗 */
+            font-size: 14px;
+            color: #000; /* 纯黑 */
+            text-transform: uppercase;
+        }
+
+        /* ================= 4. 日期格子 ================= */
+        .days li {
+            position: relative;
+            font-size: 16px;
+            font-weight: 400;
+            cursor: pointer;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            z-index: 1; /* 确保内容在伪元素之上 */
+        }
+
+        /* 非当前月的日期 (灰色) */
+        .days li.inactive {
+            color: #ccc; /* 浅灰 */
+        }
+
+        /* 当天 (实心圆圈标注) */
+        .days li.active {
+            color: #fff; /* 文字变白 */
+            font-weight: 700;
+        }
+
+        /* 使用伪元素制作正圆背景，防止因为格子长宽不一变成椭圆 */
+        .days li.active::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* 绝对居中 */
+            width: 32px;  /* 圆圈大小 */
+            height: 32px;
+            background-color: #457b9d; /* 蓝色背景 */
+            border-radius: 50%;
+            z-index: -1; /* 放在文字后面 */
+        }
+        
+        /* 鼠标悬停效果 - 灰色圆圈 */
+        .days li:hover:not(.inactive):not(.active)::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 32px;
+            height: 32px;
+            background-color: #f5f5f5;
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="calendar-wrapper">
+        <!-- 头部 -->
+        <div class="header">
+            <div class="icons">
+                <span id="prev">&lt;</span>
+            </div>
+            <p class="current-date">Loading...</p>
+            <div class="icons">
+                <span id="next">&gt;</span>
+            </div>
+        </div>
+
+        <!-- 星期头 (周一开头) -->
+        <ul class="calendar-ul weeks">
+            <li>M</li>
+            <li>T</li>
+            <li>W</li>
+            <li>T</li>
+            <li>F</li>
+            <li>S</li>
+            <li>S</li>
+        </ul>
+
+        <!-- 日期生成区 -->
+        <ul class="calendar-ul days">
+            <!-- JS生成 -->
+        </ul>
+    </div>
+
+    <script>
+        const daysTag = document.querySelector(".days");
+        const currentDate = document.querySelector(".current-date");
+        const prevNextIcon = document.querySelectorAll(".icons span");
+
+        let date = new Date();
+        let currYear = date.getFullYear();
+        let currMonth = date.getMonth();
+
+        const months = ["January", "February", "March", "April", "May", "June", "July", 
+                        "August", "September", "October", "November", "December"];
+
+        const renderCalendar = () => {
+            // 1. 获取数据
+            // 获取当月第一天是周几 (0=周日, 1=周一 ...)
+            let firstDayIndex = new Date(currYear, currMonth, 1).getDay();
+            // 修正为周一开头 (0->6, 1->0, 2->1 ...)
+            let adjustedFirstDay = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+
+            let lastDateofMonth = new Date(currYear, currMonth + 1, 0).getDate(); 
+            let lastDayofLastMonth = new Date(currYear, currMonth, 0).getDate(); 
+            
+            // 获取当月最后一天是周几，用于计算尾部空白
+            let lastDayIndex = new Date(currYear, currMonth, lastDateofMonth).getDay();
+            let adjustedLastDay = lastDayIndex === 0 ? 6 : lastDayIndex - 1;
+
+            let liTag = "";
+
+            // 2. 渲染上个月剩余日期 (灰色)
+            for (let i = adjustedFirstDay; i > 0; i--) {
+                liTag += `<li class="inactive">${lastDayofLastMonth - i + 1}</li>`;
+            }
+
+            // 3. 渲染当月日期
+            for (let i = 1; i <= lastDateofMonth; i++) {
+                let isToday = i === new Date().getDate() && currMonth === new Date().getMonth() 
+                            && currYear === new Date().getFullYear() ? "active" : "";
+                liTag += `<li class="${isToday}">${i}</li>`;
+            }
+
+            // 4. 渲染下个月开头日期 (灰色)，补齐到6行或者至少补齐本周
+            // 计算还需要补多少个格子才能填满最后一行 (每行7个)
+            let remainingCells = 7 - (adjustedLastDay + 1);
+            if (remainingCells < 7) { 
+                for (let i = 1; i <= remainingCells; i++) {
+                    liTag += `<li class="inactive">${i}</li>`;
+                }
+            }
+
+            currentDate.innerText = `${months[currMonth]} ${currYear}`;
+            daysTag.innerHTML = liTag;
+        }
+
+        renderCalendar();
+
+        prevNextIcon.forEach(icon => {
+            icon.addEventListener("click", () => { 
+                currMonth = icon.id === "prev" ? currMonth - 1 : currMonth + 1;
+                if(currMonth < 0 || currMonth > 11) { 
+                    date = new Date(currYear, currMonth, new Date().getDate());
+                    currYear = date.getFullYear(); 
+                    currMonth = date.getMonth(); 
+                } else {
+                    date = new Date();
+                }
+                renderCalendar();
+            });
+        });
+    </script>
+</body>
+</html>
